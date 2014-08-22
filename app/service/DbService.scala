@@ -1,60 +1,80 @@
 package service
 
-import model.TestInfo
-import org.joda.time
 import org.joda.time.DateTime
 
-import scala.collection.mutable
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import model.{Test, TestRun, SetRun}
+import model.SetRun.SetRunBSONWriter
+import play.api.Play.current
+import play.api.libs.concurrent.Akka
+import reactivemongo.api.MongoDriver
+import reactivemongo.api.collections.default.BSONCollection
+import reactivemongo.bson.{BSONDocument, BSONDateTime, BSONObjectID}
 
 /**
  * Created by ipamer on 27/05/2014.
  */
 object DbService {
 
-  private val testDb = new mutable.HashMap[(String, String, String, String), TestInfo]()
+  val connection = new MongoDriver(Akka.system).connection(List("localhost"))
 
-  def insertTestInfo(testInfo: TestInfo) {
-    val ti = testDb.get(testInfo.testName, testInfo.testDate, testInfo.setName, testInfo.setDate)
-    if (!ti.isEmpty) {
-      ti.get.messages ++= testInfo.messages
-    } else {
-      testDb.put((testInfo.testName, testInfo.testDate, testInfo.setName, testInfo.setDate), testInfo)
-    }
+  def db() = {
+    connection.db("tstash")
   }
 
-  private def removeOlds() = {
-    for (key <- testDb.keySet) {
-      if (key._4.toLong < DateTime.now.minusDays(1).getMillis) {
-        testDb.remove(key)
+  // TODO: close mongo connections?
+
+  def insertTestRun(setRun: SetRun, testRun: TestRun) = {
+
+    val collectionSetRuns = db.collection[BSONCollection]("SetRuns")
+
+    val setRunFuture = collectionSetRuns.find(BSONDocument("setName" -> setRun.setName, "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)))).one[SetRun].map {
+      case Some(sr) => sr
+      case None => {
+        val sr = setRun.copy(id = Some(BSONObjectID.generate))
+        collectionSetRuns.insert(sr)
+        sr
       }
     }
-  }
 
-  def getTestSets(): mutable.HashMap[String, mutable.HashMap[String, String]] = {
-    removeOlds()
-
-    val result = new mutable.HashMap[String, mutable.HashMap[String, String]]()
-    for (((tn, td, sn, sd), testInfo) <- testDb) {
-      if (result.get(sn).isEmpty) {
-        result.put(sn, new mutable.HashMap[String, String]())
-      }
-      result.get(sn).map(_.put(sd, "PASSED"))
+    // insert TestRun
+    val testRunFuture = setRunFuture.map { sr =>
+      val tr = testRun.copy(id = Some(BSONObjectID.generate), setId = sr.id)
+      val collectionTestRuns = db.collection[BSONCollection]("TestRuns")
+      collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace() })
+      tr
     }
-    result
+
+    // track test - TODO: might not needed
+//    val collectionTests = db.collection[BSONCollection]("Tests")
+//    val test = Test(testRun.testName, setRun.setName, Some(DateTime.now))
+//    collectionTests.update(BSONDocument("testName" -> testRun.testName, "setName" -> setRun.setName), test, upsert = true).recover { case x => println(x); x.printStackTrace() }
+
+    testRunFuture
   }
 
-  def getTests(setName: String, setDate: String): mutable.MutableList[TestInfo] = {
-    val result = new mutable.MutableList[TestInfo]()
-    for (((tn, td, sn, sd), testInfo) <- testDb) {
-      if (sn == setName && sd == setDate) {
-        result.+=:(testInfo)
-      }
+  def setTestRunFailed(testRunFuture: Future[TestRun], error: String): Unit = {
+    testRunFuture.map { tr =>
+      val collection = db.collection[BSONCollection]("TestRuns")
+      collection.update(BSONDocument("_id" -> tr.id.get), tr.copy(testResult = "Failed", error = Some(error)), upsert = true)
+        .recover { case x => println(x); x.printStackTrace() }
     }
-    result
   }
 
-  def getTestMessages(testName: String, testDate: String, setName: String, setDate: String): TestInfo = {
-    testDb.get((testName, testDate, setName, setDate)).get
+  def getSetRuns(): Future[List[SetRun]] = {
+    val collection = db.collection[BSONCollection]("SetRuns")
+    collection.find(BSONDocument()).sort(BSONDocument("setName" -> 1, "setDate" -> -1)).cursor[SetRun].collect[List]()
+  }
+
+  def getTests(setId: BSONObjectID): Future[List[TestRun]] = {
+    val collection = db.collection[BSONCollection]("TestRuns")
+    collection.find(BSONDocument("setId" -> setId)).sort(BSONDocument("testDate" -> -1)).cursor[TestRun].collect[List]()
+  }
+
+  def getTestMessages(testName: String, testDate: String, setName: String, setDate: String): Unit = {
+    
   }
 
 }

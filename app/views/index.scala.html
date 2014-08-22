@@ -1,18 +1,11 @@
-@(testSets: scala.collection.mutable.HashMap[String, scala.collection.mutable.HashMap[String, String]])
+@(testSets: List[model.SetRun])
 
 @main("Test Stash - Test Execution History") {
 
-    @*<script type='text/javascript' src='@routes.Assets.at("javascripts/index.min.js")'></script>*@
-
-    @for((setName, value) <- testSets) {
-        <b>@setName</b>
-        <ul>
-        @for((setDate, result) <- value) {
-            <li><a href="set?setName=@setName&setDate=@setDate">@setDate</a> | @result</li>
-        }
-        </ul>
+    <ul>
+    @for(set <- testSets) {
+        <li><b>@set.setName</b> | <a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a> | PASSED</li>
     }
-
-    @*<button id="getMessageButton">Get JSON Message</button>*@
+    </ul>
 
 }
