@@ -1,16 +1,14 @@
 package controllers
 
-import model.{TestRun, SetRun}
-import org.joda.time.DateTime
-import reactivemongo.bson.BSONObjectID
-import service.DbService
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import model.{SetRun, TestRun}
+import org.joda.time.DateTime
 import play.Logger
 import play.api.libs.iteratee.{Enumerator, Iteratee}
 import play.api.libs.json._
 import play.api.mvc._
+import service.DbService
 
 /**
  * Created by ipamer.
@@ -23,7 +21,7 @@ object MessageController extends Controller {
     val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)))
     val testRunFuture = DbService.insertTestRun(setRun, testRun)
 
-    val out = Enumerator(Json.parse( """{"message":"OK"}"""))
+    val out = Enumerator(Json.parse("""{"message":"OK"}"""))
 
     val in = Iteratee.foreach[JsValue](json => {
       Logger.info(s"received: ($testName, $testDate, $setName, $setDate) ${json}")

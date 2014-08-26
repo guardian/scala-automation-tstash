@@ -9,7 +9,8 @@ scalaVersion := "2.11.1"
 resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
 libraryDependencies ++= Seq(
-  "org.reactivemongo" %% "reactivemongo" % "0.11.0-SNAPSHOT"
+  "org.reactivemongo" %% "reactivemongo" % "0.11.0-SNAPSHOT",
+  "com.sksamuel.scrimage" %% "scrimage-core" % "1.4.1"
 )
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)

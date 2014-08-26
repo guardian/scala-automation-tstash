@@ -1,17 +1,22 @@
 package service
 
-import org.joda.time.DateTime
-
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import model.{Test, TestRun, SetRun}
+import com.sksamuel.scrimage.Image
+import controllers.MainController._
+import model.{SetRun, TestRun}
 import model.SetRun.SetRunBSONWriter
+import play.api.Logger
 import play.api.Play.current
+import play.api.libs.Files
 import play.api.libs.concurrent.Akka
+import play.api.libs.iteratee.Enumerator
+import play.api.mvc.MultipartFormData
 import reactivemongo.api.MongoDriver
 import reactivemongo.api.collections.default.BSONCollection
-import reactivemongo.bson.{BSONDocument, BSONDateTime, BSONObjectID}
+import reactivemongo.api.gridfs.{DefaultFileToSave, GridFS}
+import reactivemongo.bson.{BSONDateTime, BSONDocument, BSONObjectID}
 
 /**
  * Created by ipamer on 27/05/2014.
@@ -20,6 +25,23 @@ object DbService {
 
   lazy val connection = new MongoDriver(Akka.system).connection(List("localhost"))
   lazy val db = connection.db("tstash")
+  lazy val gfs = GridFS(db, "tstash-screenshots")
+
+  def insertScreenshot(photo: MultipartFormData.FilePart[Files.TemporaryFile]) = {
+    val fileToSave = DefaultFileToSave(photo.filename, photo.contentType)
+    val resizedFile = Image(photo.ref.file).fitToWidth(120).write
+    val enumerator = Enumerator(resizedFile)
+    // TODO: save file for the corresponding test run
+    gfs.save(enumerator, fileToSave).map {
+      case file =>
+        val id = file.id.asInstanceOf[BSONObjectID]
+        Ok("Screenshot added.")
+    } recover {
+      case e =>
+        Logger.error(e.toString)
+        InternalServerError("upload failed")
+    }
+  }
 
   def insertTestRun(setRun: SetRun, testRun: TestRun) = {
 

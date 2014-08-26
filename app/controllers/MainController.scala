@@ -1,15 +1,22 @@
 package controllers
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import play.api.mvc._
 import reactivemongo.bson.BSONObjectID
 import service.DbService
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Created by ipamer.
  */
 object MainController extends Controller {
-    
+
+    def screenshotUpload = Action.async(parse.multipartFormData) { request =>
+      request.body.file("photo") match {
+        case Some(photo) => DbService.insertScreenshot(photo)
+      }
+    }
+
     def index = Action.async {
       // TODO: send refined structures to the HTML - grouped setRuns, passed or failed
       DbService.getSetRuns().map { x => Ok(views.html.index(x)) }
