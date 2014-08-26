@@ -18,13 +18,8 @@ import reactivemongo.bson.{BSONDocument, BSONDateTime, BSONObjectID}
  */
 object DbService {
 
-  val connection = new MongoDriver(Akka.system).connection(List("localhost"))
-
-  def db() = {
-    connection.db("tstash")
-  }
-
-  // TODO: close mongo connections?
+  lazy val connection = new MongoDriver(Akka.system).connection(List("localhost"))
+  lazy val db = connection.db("tstash")
 
   def insertTestRun(setRun: SetRun, testRun: TestRun) = {
 
@@ -46,11 +41,6 @@ object DbService {
       collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace() })
       tr
     }
-
-    // track test - TODO: might not needed
-//    val collectionTests = db.collection[BSONCollection]("Tests")
-//    val test = Test(testRun.testName, setRun.setName, Some(DateTime.now))
-//    collectionTests.update(BSONDocument("testName" -> testRun.testName, "setName" -> setRun.setName), test, upsert = true).recover { case x => println(x); x.printStackTrace() }
 
     testRunFuture
   }
