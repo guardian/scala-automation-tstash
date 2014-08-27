@@ -26,15 +26,15 @@ object TestRun {
   }
 
   implicit object TestRunBSONWriter extends BSONDocumentWriter[TestRun] {
-    def write(testCase: TestRun): BSONDocument =
+    def write(testRun: TestRun): BSONDocument =
       BSONDocument(
-        "_id" -> testCase.id.getOrElse(BSONObjectID.generate),
-        "setId" -> testCase.setId.getOrElse(BSONObjectID.generate),
-        "testName" -> testCase.testName,
-        "testDate" -> testCase.testDate.map(date => BSONDateTime(date.getMillis)),
-        "testResult" -> testCase.testResult,
-        "error" -> testCase.error,
-        "messages" -> testCase.messages)
+        "_id" -> testRun.id.getOrElse(BSONObjectID.generate),
+        "setId" -> testRun.setId.getOrElse(BSONObjectID.generate),
+        "testName" -> testRun.testName,
+        "testDate" -> testRun.testDate.map(date => BSONDateTime(date.getMillis)),
+        "testResult" -> testRun.testResult,
+        "error" -> testRun.error,
+        "messages" -> testRun.messages)
   }
 
 }

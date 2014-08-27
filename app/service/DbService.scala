@@ -1,5 +1,7 @@
 package service
 
+import java.io.File
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -9,13 +11,12 @@ import model.{SetRun, TestRun}
 import model.SetRun.SetRunBSONWriter
 import play.api.Logger
 import play.api.Play.current
-import play.api.libs.Files
 import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Enumerator
-import play.api.mvc.MultipartFormData
 import reactivemongo.api.MongoDriver
 import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.api.gridfs.{DefaultFileToSave, GridFS}
+import reactivemongo.api.gridfs.Implicits._
 import reactivemongo.bson.{BSONDateTime, BSONDocument, BSONObjectID}
 
 /**
@@ -25,16 +26,19 @@ object DbService {
 
   lazy val connection = new MongoDriver(Akka.system).connection(List("localhost"))
   lazy val db = connection.db("tstash")
-  lazy val gfs = GridFS(db, "tstash-screenshots")
+  lazy val collectionSetRuns = db.collection[BSONCollection]("SetRuns")
+  lazy val collectionTestRuns = db.collection[BSONCollection]("TestRuns")
+  lazy val gfs = GridFS(db, "Screenshots")
 
-  def insertScreenshot(photo: MultipartFormData.FilePart[Files.TemporaryFile]) = {
-    val fileToSave = DefaultFileToSave(photo.filename, photo.contentType)
-    val resizedFile = Image(photo.ref.file).fitToWidth(120).write
+  def insertScreenshot(testRun: TestRun, setRun: SetRun, file: File) = {
+    val fileToSave = DefaultFileToSave(file.getName)
+    val resizedFile = Image(file).fitToWidth(120).write
     val enumerator = Enumerator(resizedFile)
-    // TODO: save file for the corresponding test run
+
     gfs.save(enumerator, fileToSave).map {
       case file =>
-        val id = file.id.asInstanceOf[BSONObjectID]
+        val screenShotId = file.id.asInstanceOf[BSONObjectID]
+        insertScreenShotToTestRun(testRun, setRun, screenShotId)
         Ok("Screenshot added.")
     } recover {
       case e =>
@@ -43,9 +47,37 @@ object DbService {
     }
   }
 
-  def insertTestRun(setRun: SetRun, testRun: TestRun) = {
+  private def insertScreenShotToTestRun(testRun: TestRun, setRun: SetRun, screenShotId: BSONObjectID): Unit = {
+    findTest(setRun, testRun).map(_.map({ tr =>
+        collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$set" -> BSONDocument("screenShotId" -> screenShotId)))
+          .recover { case x => println(x); x.printStackTrace() }
+    }))
+  }
 
-    val collectionSetRuns = db.collection[BSONCollection]("SetRuns")
+  private def findTest(setRun: SetRun, testRun: TestRun): Future[Future[TestRun]] = {
+    findSetRun(setRun).map {
+      case Some(sr) => {
+        findTestRun(testRun, sr.id.get).map {
+          case Some(tr) => tr
+        }
+      }
+//      case None => Failure(new RuntimeException("Test Run not found."))
+    }
+  }
+
+  private def findSetRun(setRun: SetRun): Future[Option[SetRun]] = {
+    collectionSetRuns.find(BSONDocument("setName" -> setRun.setName, "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)))).one[SetRun]
+  }
+
+  private def findTestRun(testRun: TestRun, setRunId: BSONObjectID): Future[Option[TestRun]] = {
+    collectionTestRuns.find(BSONDocument("setId" -> setRunId, "testName" -> testRun.testName, "testDate" -> testRun.testDate.map(date => BSONDateTime(date.getMillis)))).one[TestRun]
+  }
+
+
+
+
+
+  def insertTestRun(setRun: SetRun, testRun: TestRun) = {
 
     val setRunFuture = collectionSetRuns.find(BSONDocument("setName" -> setRun.setName, "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)))).one[SetRun].map {
       case Some(sr) => sr
@@ -59,7 +91,6 @@ object DbService {
     // insert TestRun
     val testRunFuture = setRunFuture.map { sr =>
       val tr = testRun.copy(id = Some(BSONObjectID.generate), setId = sr.id)
-      val collectionTestRuns = db.collection[BSONCollection]("TestRuns")
       collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace() })
       tr
     }
@@ -67,25 +98,30 @@ object DbService {
     testRunFuture
   }
 
+
+
+
+
   def setTestRunFailed(testRunFuture: Future[TestRun], error: String): Unit = {
     testRunFuture.map { tr =>
-      val collection = db.collection[BSONCollection]("TestRuns")
-      collection.update(BSONDocument("_id" -> tr.id.get), tr.copy(testResult = "Failed", error = Some(error)), upsert = true)
+      collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$set" -> BSONDocument("testResult" -> "Failed", "error" -> error)))
         .recover { case x => println(x); x.printStackTrace() }
     }
   }
 
-  def getSetRuns(): Future[List[SetRun]] = {
-    val collection = db.collection[BSONCollection]("SetRuns")
-    collection.find(BSONDocument()).sort(BSONDocument("setName" -> 1, "setDate" -> -1)).cursor[SetRun].collect[List]()
+
+
+
+
+  def getAllSetRun(): Future[List[SetRun]] = {
+    collectionSetRuns.find(BSONDocument()).sort(BSONDocument("setName" -> 1, "setDate" -> -1)).cursor[SetRun].collect[List]()
   }
 
-  def getTests(setId: BSONObjectID): Future[List[TestRun]] = {
-    val collection = db.collection[BSONCollection]("TestRuns")
-    collection.find(BSONDocument("setId" -> setId)).sort(BSONDocument("testDate" -> -1)).cursor[TestRun].collect[List]()
+  def getAllTest(setId: BSONObjectID): Future[List[TestRun]] = {
+    collectionTestRuns.find(BSONDocument("setId" -> setId)).sort(BSONDocument("testDate" -> -1)).cursor[TestRun].collect[List]()
   }
 
-  def getTestMessages(testName: String, testDate: String, setName: String, setDate: String): Unit = {
+  def getAllTestMessage(testName: String, testDate: String, setName: String, setDate: String): Unit = {
     
   }
 
