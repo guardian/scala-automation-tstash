@@ -23,7 +23,6 @@ object MainController extends Controller {
     }
 
     def index = Action.async {
-      // TODO: send refined structures to the HTML - grouped setRuns, passed or failed
       DbService.getAllSetRun().map { x => Ok(views.html.index(x)) }
     }
     

@@ -29,6 +29,31 @@ object DbService {
   lazy val collectionTestRuns = db.collection[BSONCollection]("TestRuns")
   lazy val gfs = GridFS(db, "Screenshots")
 
+  def insertTestRun(setRun: SetRun, testRun: TestRun) = {
+
+    val setRunFuture = collectionSetRuns.find(BSONDocument("setName" -> setRun.setName, "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)))).one[SetRun].map {
+      case Some(sr) => sr
+      case None => {
+        val sr = setRun.copy(id = Some(BSONObjectID.generate))
+        collectionSetRuns.insert(sr)
+        sr
+      }
+    }
+
+    // insert TestRun
+    val testRunFuture = setRunFuture.map { sr =>
+      val tr = testRun.copy(id = Some(BSONObjectID.generate), setId = sr.id)
+      collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace() })
+      tr
+    }
+
+    testRunFuture
+  }
+
+  /*******************************
+   * Insert Screen shot
+   *******************************/
+
   def insertScreenshot(testRun: TestRun, setRun: SetRun, file: File) = {
     val fileToSave = DefaultFileToSave(file.getName)
     val resizedFile = Image(file).fitToWidth(120).write
@@ -72,34 +97,9 @@ object DbService {
     collectionTestRuns.find(BSONDocument("setId" -> setRunId, "testName" -> testRun.testName, "testDate" -> testRun.testDate.map(date => BSONDateTime(date.getMillis)))).one[TestRun]
   }
 
-
-
-
-
-  def insertTestRun(setRun: SetRun, testRun: TestRun) = {
-
-    val setRunFuture = collectionSetRuns.find(BSONDocument("setName" -> setRun.setName, "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)))).one[SetRun].map {
-      case Some(sr) => sr
-      case None => {
-        val sr = setRun.copy(id = Some(BSONObjectID.generate))
-        collectionSetRuns.insert(sr)
-        sr
-      }
-    }
-
-    // insert TestRun
-    val testRunFuture = setRunFuture.map { sr =>
-      val tr = testRun.copy(id = Some(BSONObjectID.generate), setId = sr.id)
-      collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace() })
-      tr
-    }
-
-    testRunFuture
-  }
-
-
-
-
+  /*******************************
+   * Test case modifications
+   *******************************/
 
   def setTestRunFailed(testRunFuture: Future[TestRun], error: String): Unit = {
     testRunFuture.map { tr =>
@@ -108,9 +108,16 @@ object DbService {
     }
   }
 
+  def addMessageToTestRun(testRunFuture: Future[TestRun], message: String): Unit = {
+    testRunFuture.map { tr =>
+      collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$addToSet" -> BSONDocument("messages" -> message)))
+        .recover { case x => println(x); x.printStackTrace() }
+    }
+  }
 
-
-
+  /*******************************
+   * Getters for html pages
+   *******************************/
 
   def getAllSetRun(): Future[Map[String, List[SetRun]]] = {
     collectionSetRuns.find(BSONDocument()).sort(BSONDocument("setName" -> 1, "setDate" -> -1)).cursor[SetRun].collect[List]().map { setRunList =>

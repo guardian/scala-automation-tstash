@@ -29,7 +29,7 @@ object MessageController extends Controller {
       val error = (json \ "error").asOpt[String]
       val timeStamp = (json \ "timeStamp").toString()
 
-      message.map { str => "" } // add message to testcase
+      message.map { str => DbService.addMessageToTestRun(testRunFuture, str) }
       error.map { str => DbService.setTestRunFailed(testRunFuture, str) } // test failed
     })
 
