@@ -129,8 +129,12 @@ object DbService {
     collectionTestRuns.find(BSONDocument("setId" -> setId)).sort(BSONDocument("testDate" -> -1)).cursor[TestRun].collect[List]()
   }
 
-  def getAllTestMessage(testName: String, testDate: String, setName: String, setDate: String): Unit = {
-    
+  def getTest(testId: BSONObjectID): Future[TestRun] = {
+    collectionTestRuns.find(BSONDocument("_id" -> testId)).one[TestRun].map { _.get }
+  }
+
+  def getScreenShot(id: BSONObjectID) = {
+    gfs.find(BSONDocument("_id" -> id))//.one[TestRun].map { _.get }
   }
 
 }

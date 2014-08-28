@@ -7,9 +7,10 @@ case class TestRun(id: Option[BSONObjectID],
                    setId: Option[BSONObjectID],
                    testName: String,
                    testDate: Option[DateTime],
-                   testResult: String,  // TODO: TestResult
+                   testResult: String,
                    error: Option[String],
-                   messages: Option[List[String]])
+                   messages: Option[List[String]],
+                   screenShotId: Option[BSONObjectID])
 
 object TestRun {
 
@@ -22,7 +23,8 @@ object TestRun {
         doc.getAs[BSONDateTime]("testDate").map(dt => new DateTime(dt.value)),
         doc.getAs[String]("testResult").get,
         doc.getAs[String]("error"),
-        doc.getAs[List[String]]("messages"))
+        doc.getAs[List[String]]("messages"),
+        doc.getAs[BSONObjectID]("screenShotId"))
   }
 
   implicit object TestRunBSONWriter extends BSONDocumentWriter[TestRun] {

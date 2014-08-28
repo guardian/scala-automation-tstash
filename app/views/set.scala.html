@@ -4,7 +4,7 @@
 
     <ul>
     @for(test <- testList) {
-       <li><a href="test?testName=@test.testName&testDate=@test.testDate">@test.testName</a> | @test.testResult</li>
+       <li><a href="test?id=@test.id.get.stringify">@test.testName</a> | @test.testResult</li>
     }
     </ul>
 

@@ -1,11 +1,7 @@
 package controllers
 
-import play.Logger
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import model.{SetRun, TestRun}
-import org.joda.time.DateTime
 import play.api.mvc._
 import reactivemongo.bson.BSONObjectID
 import service.DbService
@@ -15,24 +11,21 @@ import service.DbService
  */
 object MainController extends Controller {
 
-    def screenShotUpload(testName: String, testDate: String, setName: String, setDate: String) = Action.async(parse.temporaryFile) { request =>
-      Logger.info(s"received: ($testName, $testDate, $setName, $setDate) Screen shot received.")
-      val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None)
-      val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)))
-      DbService.insertScreenshot(testRun, setRun, request.body.file)
-    }
+  def index = Action.async {
+    DbService.getAllSetRun().map { x => Ok(views.html.index(x)) }
+  }
 
-    def index = Action.async {
-      DbService.getAllSetRun().map { x => Ok(views.html.index(x)) }
-    }
-    
-    def set(setId: String) = Action.async {
-      DbService.getAllTest(BSONObjectID.parse(setId).get).map { x => Ok(views.html.set(x)) }
-    }
+  def set(setId: String) = Action.async {
+    DbService.getAllTest(BSONObjectID(setId)).map { x => Ok(views.html.set(x)) }
+  }
 
-    def test(testName: String, testDate: String, setName: String, setDate: String) = Action {
-//      Ok(views.html.test(DbService.getTestMessages(testName, testDate, setName, setDate)))
-      Ok("TEST")
-    }
+  def test(id: String) = Action.async {
+    DbService.getTest(BSONObjectID(id)).map { x => Ok(views.html.test(x)) }
+  }
+
+  def screenShot(id: String) = Action {
+    //      DbService.getAllTest(BSONObjectID(id)).map { x => Ok(views.html.test(x)) }
+    Ok("Your image is in a safe place. Display coming soon...")
+  }
 
 }

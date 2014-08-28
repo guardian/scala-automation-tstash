@@ -17,7 +17,7 @@ object MessageController extends Controller {
 
   def report(testName: String, testDate: String, setName: String, setDate: String) = WebSocket.using[JsValue] { request =>
 
-    val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None)
+    val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None, None)
     val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)))
     val testRunFuture = DbService.insertTestRun(setRun, testRun)
 
@@ -34,6 +34,13 @@ object MessageController extends Controller {
     })
 
     (in, out)
+  }
+
+  def screenShotUpload(testName: String, testDate: String, setName: String, setDate: String) = Action.async(parse.temporaryFile) { request =>
+    Logger.info(s"received: ($testName, $testDate, $setName, $setDate) Screen shot received.")
+    val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None, None)
+    val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)))
+    DbService.insertScreenshot(testRun, setRun, request.body.file)
   }
 
   //  implicit val testResultReads: Reads[TestResult] = EnumUtils.enumReads(TestResult)

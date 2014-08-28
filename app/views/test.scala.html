@@ -1,9 +1,15 @@
-@(testInfo: model.TestRun)
+@(testRun: model.TestRun)
 
 @main("Test Stash - Test Log") {
 
+    <b>@testRun.testName</b>
+
+    @if(testRun.screenShotId.isDefined) {
+        <a href="screenShot?id=@testRun.screenShotId.get.stringify">ScreenShot</a>
+    }
+
     <ul>
-    @for(message <- testInfo.messages) {
+    @for(message <- testRun.messages.getOrElse(List())) {
         <li>@message</li>
     }
     </ul>
