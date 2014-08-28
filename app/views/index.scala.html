@@ -1,11 +1,14 @@
-@(testSets: List[model.SetRun])
+@(testSets: Map[String, List[model.SetRun]])
 
 @main("Test Stash - Test Execution History") {
 
-    <ul>
-    @for(set <- testSets) {
-        <li><b>@set.setName</b> | <a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a> | PASSED</li>
+    @for((key, value) <- testSets) {
+        <b>@key</b>
+        <ul>
+        @for(set <- value) {
+            <li><a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a> | PASSED</li>
+        }
+        </ul>
     }
-    </ul>
 
 }

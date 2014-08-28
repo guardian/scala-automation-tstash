@@ -8,7 +8,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.sksamuel.scrimage.Image
 import controllers.MainController._
 import model.{SetRun, TestRun}
-import model.SetRun.SetRunBSONWriter
 import play.api.Logger
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
@@ -16,8 +15,8 @@ import play.api.libs.iteratee.Enumerator
 import reactivemongo.api.MongoDriver
 import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.api.gridfs.{DefaultFileToSave, GridFS}
-import reactivemongo.api.gridfs.Implicits._
 import reactivemongo.bson.{BSONDateTime, BSONDocument, BSONObjectID}
+import reactivemongo.api.gridfs.Implicits._
 
 /**
  * Created by ipamer on 27/05/2014.
@@ -113,8 +112,10 @@ object DbService {
 
 
 
-  def getAllSetRun(): Future[List[SetRun]] = {
-    collectionSetRuns.find(BSONDocument()).sort(BSONDocument("setName" -> 1, "setDate" -> -1)).cursor[SetRun].collect[List]()
+  def getAllSetRun(): Future[Map[String, List[SetRun]]] = {
+    collectionSetRuns.find(BSONDocument()).sort(BSONDocument("setName" -> 1, "setDate" -> -1)).cursor[SetRun].collect[List]().map { setRunList =>
+      setRunList.groupBy[String](setRun => setRun.setName)
+    }
   }
 
   def getAllTest(setId: BSONObjectID): Future[List[TestRun]] = {

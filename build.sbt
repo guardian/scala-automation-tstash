@@ -10,6 +10,7 @@ resolvers += "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositor
 
 libraryDependencies ++= Seq(
   "org.reactivemongo" %% "reactivemongo" % "0.11.0-SNAPSHOT",
+  "org.reactivemongo" %% "play2-reactivemongo" % "0.11.0-SNAPSHOT",
   "com.sksamuel.scrimage" %% "scrimage-core" % "1.4.1"
 )
 
