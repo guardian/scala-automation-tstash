@@ -116,6 +116,14 @@ object DbService {
   }
 
   /*******************************
+   * Cleanup functions
+   *******************************/
+
+  def cleanupDB(): Unit = {
+    Logger.info("Cleaning up DB...")
+  }
+
+  /*******************************
    * Getters for html pages
    *******************************/
 
