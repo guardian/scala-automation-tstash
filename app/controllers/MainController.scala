@@ -1,10 +1,9 @@
 package controllers
 
-import play.modules.reactivemongo.MongoController
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import play.api.mvc._
+import play.modules.reactivemongo.MongoController
 import reactivemongo.bson.BSONObjectID
 import service.DbService
 
@@ -22,7 +21,10 @@ object MainController extends Controller with MongoController {
   }
 
   def test(id: String) = Action.async {
-    DbService.getTest(BSONObjectID(id)).map { x => Ok(views.html.test(x)) }
+    DbService.getTest(BSONObjectID(id)).map {
+      case Some(x) => Ok(views.html.test(x))
+      case None => Redirect(routes.MainController.index())
+    }
   }
 
   def screenShot(id: String) = Action.async {

@@ -6,7 +6,7 @@
         <b>@key</b>
         <ul>
         @for(set <- value) {
-            <li><a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a> | PASSED</li>
+            <li><a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a> | @set.result</li>
         }
         </ul>
     }

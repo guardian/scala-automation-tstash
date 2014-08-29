@@ -6,7 +6,8 @@ import reactivemongo.bson._
 
 case class SetRun(id: Option[BSONObjectID],
                   setName: String,
-                  setDate: Option[DateTime])
+                  setDate: Option[DateTime],
+                  result: String)
 
 object SetRun {
 
@@ -18,7 +19,8 @@ object SetRun {
       SetRun(
         doc.getAs[BSONObjectID]("_id"),
         doc.getAs[String]("setName").get,
-        doc.getAs[BSONDateTime]("setDate").map(dt => new DateTime(dt.value)))
+        doc.getAs[BSONDateTime]("setDate").map(dt => new DateTime(dt.value)),
+        doc.getAs[String]("result").get)
   }
 
   implicit object SetRunBSONWriter extends BSONDocumentWriter[SetRun] {
@@ -26,7 +28,8 @@ object SetRun {
       BSONDocument(
         "_id" -> setRun.id.getOrElse(BSONObjectID.generate),
         "setName" -> setRun.setName,
-        "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)))
+        "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)),
+        "result" -> setRun.result)
   }
 
 }

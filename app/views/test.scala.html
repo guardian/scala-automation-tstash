@@ -2,7 +2,12 @@
 
 @main("Test Stash - Test Log") {
 
-    <b>@testRun.testName</b>
+    <b>@testRun.testName</b> |
+    <b>@testRun.testDate</b> |
+    <b>@testRun.testResult</b> |
+    @if(testRun.error.isDefined) {
+        <b>@testRun.error</b>
+    }
 
     <ul>
     @for(message <- testRun.messages.getOrElse(List())) {

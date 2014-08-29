@@ -8,6 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.sksamuel.scrimage.Image
 import controllers.MainController._
 import model.{SetRun, TestRun}
+import org.joda.time.DateTime
 import play.api.Logger
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
@@ -15,8 +16,8 @@ import play.api.libs.iteratee.Enumerator
 import reactivemongo.api.MongoDriver
 import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.api.gridfs.{DefaultFileToSave, GridFS}
-import reactivemongo.bson.{BSONDateTime, BSONDocument, BSONObjectID}
 import reactivemongo.api.gridfs.Implicits._
+import reactivemongo.bson.{BSONDateTime, BSONDocument, BSONObjectID}
 
 /**
  * Created by ipamer on 27/05/2014.
@@ -40,14 +41,13 @@ object DbService {
       }
     }
 
-    // insert TestRun
     val testRunFuture = setRunFuture.map { sr =>
       val tr = testRun.copy(id = Some(BSONObjectID.generate), setId = sr.id)
       collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace() })
       tr
     }
 
-    testRunFuture
+    (setRunFuture, testRunFuture)
   }
 
   /*******************************
@@ -67,25 +67,23 @@ object DbService {
     } recover {
       case e =>
         Logger.error(e.toString)
+        Logger.error(e.getCause.toString)
         InternalServerError("upload failed")
     }
   }
 
   private def insertScreenShotToTestRun(testRun: TestRun, setRun: SetRun, screenShotId: BSONObjectID): Unit = {
-    findTest(setRun, testRun).map(_.map({ tr =>
-        collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$set" -> BSONDocument("screenShotId" -> screenShotId)))
-          .recover { case x => println(x); x.printStackTrace() }
-    }))
-  }
-
-  private def findTest(setRun: SetRun, testRun: TestRun): Future[Future[TestRun]] = {
     findSetRun(setRun).map {
       case Some(sr) => {
         findTestRun(testRun, sr.id.get).map {
-          case Some(tr) => tr
+          case Some(tr) => {
+            collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$set" -> BSONDocument("screenShotId" -> screenShotId)))
+              .recover { case e => new RuntimeException("Screen Shot insert failed.", e) }
+          }
+          case None => new RuntimeException("Test Run not found.")
         }
       }
-//      case None => Failure(new RuntimeException("Test Run not found."))
+      case None => new RuntimeException("Set Run not found.")
     }
   }
 
@@ -101,8 +99,12 @@ object DbService {
    * Test case modifications
    *******************************/
 
-  def setTestRunFailed(testRunFuture: Future[TestRun], error: String): Unit = {
-    testRunFuture.map { tr =>
+  def setRunFailed(setAndTestFuture: (Future[SetRun], Future[TestRun]), error: String): Unit = {
+    setAndTestFuture._1.map { sr =>
+      collectionSetRuns.update(BSONDocument("_id" -> sr.id.get), BSONDocument("$set" -> BSONDocument("result" -> "Failed")))
+        .recover { case x => println(x); x.printStackTrace() }
+    }
+    setAndTestFuture._2.map { tr =>
       collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$set" -> BSONDocument("testResult" -> "Failed", "error" -> error)))
         .recover { case x => println(x); x.printStackTrace() }
     }
@@ -119,8 +121,15 @@ object DbService {
    * Cleanup functions
    *******************************/
 
-  def cleanupDB(): Unit = {
+  def cleanupDB(daysToKeep: Int = 14): Unit = {
     Logger.info("Cleaning up DB...")
+    collectionSetRuns.remove(BSONDocument("setDate" -> BSONDocument("$lt" -> BSONDateTime(DateTime.now().minusDays(daysToKeep).getMillis))))
+    collectionTestRuns.remove(BSONDocument("testDate" -> BSONDocument("$lt" -> BSONDateTime(DateTime.now().minusDays(daysToKeep).getMillis))))
+    gfs.find(BSONDocument("uploadDate" -> BSONDocument("$lt" -> BSONDateTime(DateTime.now().minusDays(daysToKeep).getMillis)))).collect[List]().map { list =>
+      list.foreach { doc =>
+        gfs.remove(doc.id.asInstanceOf[BSONObjectID])
+      }
+    }
   }
 
   /*******************************
@@ -137,8 +146,8 @@ object DbService {
     collectionTestRuns.find(BSONDocument("setId" -> setId)).sort(BSONDocument("testDate" -> -1)).cursor[TestRun].collect[List]()
   }
 
-  def getTest(testId: BSONObjectID): Future[TestRun] = {
-    collectionTestRuns.find(BSONDocument("_id" -> testId)).one[TestRun].map { _.get }
+  def getTest(testId: BSONObjectID): Future[Option[TestRun]] = {
+    collectionTestRuns.find(BSONDocument("_id" -> testId)).one[TestRun]
   }
 
   def getScreenShot(id: BSONObjectID) = {

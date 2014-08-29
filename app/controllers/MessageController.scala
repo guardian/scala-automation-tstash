@@ -18,8 +18,8 @@ object MessageController extends Controller {
   def report(testName: String, testDate: String, setName: String, setDate: String) = WebSocket.using[JsValue] { request =>
 
     val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None, None)
-    val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)))
-    val testRunFuture = DbService.insertTestRun(setRun, testRun)
+    val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)), "Passed")
+    val setAndTestFuture = DbService.insertTestRun(setRun, testRun)
 
     val out = Enumerator(Json.parse("""{"message":"OK"}"""))
 
@@ -29,8 +29,8 @@ object MessageController extends Controller {
       val error = (json \ "error").asOpt[String]
       val timeStamp = (json \ "timeStamp").toString()
 
-      message.map { str => DbService.addMessageToTestRun(testRunFuture, str) }
-      error.map { str => DbService.setTestRunFailed(testRunFuture, str) } // test failed
+      message.map { str => DbService.addMessageToTestRun(setAndTestFuture._2, str) }
+      error.map { str => DbService.setRunFailed(setAndTestFuture, str) } // test failed
     })
 
     (in, out)
@@ -39,7 +39,7 @@ object MessageController extends Controller {
   def screenShotUpload(testName: String, testDate: String, setName: String, setDate: String) = Action.async(parse.temporaryFile) { request =>
     Logger.info(s"received: ($testName, $testDate, $setName, $setDate) Screen shot received.")
     val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None, None)
-    val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)))
+    val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)), "Passed")
     DbService.insertScreenshot(testRun, setRun, request.body.file)
   }
 
