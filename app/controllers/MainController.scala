@@ -1,5 +1,7 @@
 package controllers
 
+import play.modules.reactivemongo.MongoController
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import play.api.mvc._
@@ -9,7 +11,7 @@ import service.DbService
 /**
  * Created by ipamer.
  */
-object MainController extends Controller {
+object MainController extends Controller with MongoController {
 
   def index = Action.async {
     DbService.getAllSetRun().map { x => Ok(views.html.index(x)) }
@@ -23,9 +25,8 @@ object MainController extends Controller {
     DbService.getTest(BSONObjectID(id)).map { x => Ok(views.html.test(x)) }
   }
 
-  def screenShot(id: String) = Action {
-    //      DbService.getAllTest(BSONObjectID(id)).map { x => Ok(views.html.test(x)) }
-    Ok("Your image is in a safe place. Display coming soon...")
+  def screenShot(id: String) = Action.async {
+    serve(DbService.gfs, DbService.getScreenShot(BSONObjectID(id)))
   }
 
 }

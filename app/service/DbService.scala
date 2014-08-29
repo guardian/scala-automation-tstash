@@ -56,7 +56,7 @@ object DbService {
 
   def insertScreenshot(testRun: TestRun, setRun: SetRun, file: File) = {
     val fileToSave = DefaultFileToSave(file.getName)
-    val resizedFile = Image(file).fitToWidth(120).write
+    val resizedFile = Image(file).fitToWidth(600).write
     val enumerator = Enumerator(resizedFile)
 
     gfs.save(enumerator, fileToSave).map {
@@ -142,7 +142,7 @@ object DbService {
   }
 
   def getScreenShot(id: BSONObjectID) = {
-    gfs.find(BSONDocument("_id" -> id))//.one[TestRun].map { _.get }
+    gfs.find(BSONDocument("_id" -> id))
   }
 
 }

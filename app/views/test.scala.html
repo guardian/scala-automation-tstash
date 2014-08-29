@@ -4,14 +4,13 @@
 
     <b>@testRun.testName</b>
 
-    @if(testRun.screenShotId.isDefined) {
-        <a href="screenShot?id=@testRun.screenShotId.get.stringify">ScreenShot</a>
-    }
-
     <ul>
     @for(message <- testRun.messages.getOrElse(List())) {
         <li>@message</li>
     }
     </ul>
 
+    @if(testRun.screenShotId.isDefined) {
+        <img src="@routes.MainController.screenShot(testRun.screenShotId.get.stringify)"/>
+    }
 }
