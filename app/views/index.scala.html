@@ -1,14 +1,41 @@
 @(testSets: Map[String, List[model.SetRun]])
 
-@main("Test Stash - Test Execution History") {
-
-    @for((key, value) <- testSets) {
-        <b>@key</b>
-        <ul>
-        @for(set <- value) {
-            <li><a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a> | @set.result</li>
-        }
+@navBar = {
+    <li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown">Project name<span class="caret"></span></a>
+        @if(testSets.isEmpty) {
+            No projects yet.
+        } else {
+        <ul class="dropdown-menu" role="menu">
+            @for(key <- testSets.keySet) {
+            <li><a href="project?name=@key">@key</a></li>
+            }
         </ul>
-    }
+        }
+    </li>
+    <li><a href="#">Team City</a></li>
+    <li><a href="#">Github</a></li>
+    <li><a href="#">JIRA</a></li>
+}
+
+@main("Test Stash - Test Execution History", navBar = (navBar)) {
+
+    <img class="pull-left" src="@routes.Assets.at("images/automated.gif")" alt="Evolution of testing">
+    <h2> Rascal (plural rascals)</h2>
+    <ol>
+        <li>A dishonest person; a rogue; a scoundrel; a trickster.</li>
+        <li>A playfully mischievous person or creature; a troublemaker.</li>
+        <ul>
+            <li>That little rascal bit me!</li>
+            <li> If you have deer in the area, you may have to put a fence around your garden to keep the rascals out.
+            </li>
+        </ul>
+        <li><strong>The Guardian's new SCALA test automation framework...</strong></li>
+    </ol>
+    <p>Nulla porttitor accumsan tincidunt. Donec rutrum congue leo eget malesuada. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;
+        Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Sed porttitor lectus nibh. Curabitur aliquet quam id dui posuere blandit.
+        Curabitur aliquet quam id dui posuere blandit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;
+        Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;
+        Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.
+        Praesent sapien massa, convallis a pellentesque nec, egestas non nisi.</p>
 
 }

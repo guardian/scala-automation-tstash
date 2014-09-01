@@ -2,20 +2,29 @@
 
 @main("Test Stash - Test Log") {
 
-    <b>@testRun.testName</b> |
-    <b>@testRun.testDate</b> |
-    <b>@testRun.testResult</b> |
-    @if(testRun.error.isDefined) {
-        <b>@testRun.error</b>
+    @if(testRun.testResult == "Passed") {
+        <img class="pull-right" src="@routes.Assets.at("images/thumbs_up.gif")" alt="thumbs_up">
+    } else {
+        <img class="pull-right" src="@routes.Assets.at("images/thumbs_down.gif")" alt="thumbs_down">
     }
 
+    <h2>@testRun.testName</h2>
+    <ul>
+        <li>@testRun.testDate</li>
+    </ul>
+
+    <h3>Log</h3>
     <ul>
     @for(message <- testRun.messages.getOrElse(List())) {
         <li>@message</li>
     }
     </ul>
 
+    @if(testRun.error.isDefined) {
+        <h3>Error - @testRun.error</h3>
+    }
+
     @if(testRun.screenShotId.isDefined) {
-        <img src="@routes.MainController.screenShot(testRun.screenShotId.get.stringify)"/>
+        <br/><img src="@routes.MainController.screenShot(testRun.screenShotId.get.stringify)"/>
     }
 }

@@ -1,25 +1,86 @@
-@(title: String)(content: Html)
+@(title: String, navBar: Html = Html(""))(content: Html)
 
 <!DOCTYPE html>
-<html>
-<head>
-    <title>@title</title>
-    <link rel='shortcut icon' type='image/png' href='@routes.Assets.at("images/favicon.png")'>
-    <link rel='stylesheet' href='@routes.Assets.at("stylesheets/bootstrap.min.css")'>
-    <link rel='stylesheet' href='@routes.Assets.at("stylesheets/index.css")'>
-    <script type='text/javascript' src='@routes.Assets.at("javascripts/jquery.min.js")'></script>
-    @*<script type="text/javascript" src="@routes.MessageController.javascriptRoutes"></script>*@
-</head>
-<body>
-    <div class="navbar navbar-fixed-top">
-        <div class="navbar-inner">
-            <div class="container-fluid">
-                <a id="titleLink" class="brand" href="/">@title</a>
-            </div>
+<!--[if lt IE 7]>
+<html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>
+<html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>
+<html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>@title</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel='shortcut icon' type='image/png' href='@routes.Assets.at("images/favicon.ico")'>
+
+        <link rel='stylesheet' href='@routes.Assets.at("stylesheets/bootstrap-theme.css.map")'>
+        <link rel='stylesheet' href='@routes.Assets.at("stylesheets/bootstrap-theme.min.css")'>
+        <link rel='stylesheet' href='@routes.Assets.at("stylesheets/bootstrap.css")'>
+        <link rel='stylesheet' href='@routes.Assets.at("stylesheets/bootstrap.css.map")'>
+        <link rel='stylesheet' href='@routes.Assets.at("stylesheets/bootstrap.min.css")'>
+        <link rel='stylesheet' href='@routes.Assets.at("stylesheets/rascal.css")'>
+
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/jquery.js")'></script>
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/jquery-ui.js")'></script>
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/jquery-ui.min.js")'></script>
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/dropdown.js")'></script>
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/bootstrap.js")'></script>
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/bootstrap.min.js")'></script>
+        <script type='text/javascript' src='@routes.Assets.at("javascripts/accordion.js")'></script>
+    </head>
+    <body>
+        <div id="topnav">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="active"><a href="#">Help</a></li>
+            </ul>
         </div>
-    </div>
-    <div class="container">
-        @content
-    </div>
-</body>
+        <header>
+            <img src="@routes.Assets.at("images/rascal_Logo.gif")" alt="RASCAL">
+            <h1>Rascal - R[our] SCALA Test Automation Framework</h1>
+        </header>
+
+        <!--[if lt IE 7]>
+        <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+        <nav class="navbar navbar-inverse" role="navigation">
+            <div class="container-fluid">
+                    <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1"><span class="sr-only">Toggle navigation</span> <span
+                    class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span></button>
+
+                    <a class="navbar-brand" href="/">Dashboard:</a></div>
+
+
+                    <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        @navBar
+                    </ul>
+                    <form class="navbar-form navbar-right" role="search">
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Search">
+                        </div>
+                        <button type="submit" class="btn btn-default">Submit</button>
+                    </form>
+                </div>
+                    <!-- /.navbar-collapse -->
+            </div>
+                <!-- /.container-fluid -->
+        </nav>
+        <content>
+          @content
+        </content>
+        <footer class="modal-footer">
+            <p>&copy;2014 Guardian News and Media Limited or its affiliated companies. All rights reserved.</p>
+        </footer>
+    </body>
 </html>

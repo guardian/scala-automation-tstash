@@ -2,13 +2,14 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET         /                                 controllers.MainController.index()
-GET         /set                              controllers.MainController.set(setId)
-GET         /test                             controllers.MainController.test(id)
-GET         /report                           controllers.MessageController.report(testName, testDate, setName, setDate)
-POST        /screenShotUpload                 controllers.MessageController.screenShotUpload(testName, testDate, setName, setDate)
-GET         /screenShot                       controllers.MainController.screenShot(id)
+GET         /                        controllers.MainController.index()
+GET         /project                 controllers.MainController.project(name)
+GET         /set                     controllers.MainController.set(setId)
+GET         /test                    controllers.MainController.test(id)
+GET         /report                  controllers.MessageController.report(testName, testDate, setName, setDate)
+POST        /screenShotUpload        controllers.MessageController.screenShotUpload(testName, testDate, setName, setDate)
+GET         /screenShot              controllers.MainController.screenShot(id)
 #GET         /assets/javascripts/routes        controllers.MessageController.javascriptRoutes()
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file                     controllers.Assets.at(path="/public", file)
+GET         /assets/*file            controllers.Assets.at(path="/public", file)

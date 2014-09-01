@@ -1,0 +1,40 @@
+@(setName: String, testSets: List[model.SetRun])
+
+@navBar = {
+    <li><a href="#">@setName</a></li>
+}
+
+@main("Test Stash - Test Execution History", navBar = (navBar)) {
+
+    <div class="container">
+        @for(set <- testSets) {
+        <div class="col-sm-12">
+            <div class="panel-group ng-scope" id="accordion">
+                <div class="panel panel-default" style="display: block;">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a>
+                                            @if(set.result == "Passed") {
+                                            <span class="success">
+                                            } else {
+                                            <span class="fail">
+                                            }
+                                                @set.result
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+
+}

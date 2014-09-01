@@ -142,6 +142,10 @@ object DbService {
     }
   }
 
+  def getSetRunList(setName: String): Future[List[SetRun]] = {
+    collectionSetRuns.find(BSONDocument("setName" -> setName)).sort(BSONDocument("setDate" -> -1)).cursor[SetRun].collect[List]()
+  }
+
   def getAllTest(setId: BSONObjectID): Future[List[TestRun]] = {
     collectionTestRuns.find(BSONDocument("setId" -> setId)).sort(BSONDocument("testDate" -> -1)).cursor[TestRun].collect[List]()
   }

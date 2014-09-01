@@ -16,6 +16,10 @@ object MainController extends Controller with MongoController {
     DbService.getAllSetRun().map { x => Ok(views.html.index(x)) }
   }
 
+  def project(name: String) = Action.async {
+    DbService.getSetRunList(name).map { x => Ok(views.html.project(name, x)) }
+  }
+
   def set(setId: String) = Action.async {
     DbService.getAllTest(BSONObjectID(setId)).map { x => Ok(views.html.set(x)) }
   }
