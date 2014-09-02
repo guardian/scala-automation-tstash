@@ -16,15 +16,13 @@
                             <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
                                 <div class="container">
                                     <div class="row">
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-12">
                                             <a href="set?setId=@set.id.get.stringify">@set.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a>
                                             @if(set.result == "Passed") {
-                                            <span class="success">
+                                                <span class="success">@set.result</span>
                                             } else {
-                                            <span class="fail">
+                                                <span class="fail">@set.result</span>
                                             }
-                                                @set.result
-                                            </span>
                                         </div>
                                     </div>
                                 </div>

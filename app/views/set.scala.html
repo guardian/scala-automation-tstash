@@ -12,12 +12,12 @@
                                 <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
                                     <div class="container">
                                         <div class="row">
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-12">
                                                 <a href="test?id=@test.id.get.stringify">@test.testName - @test.testDate.get.toDate.format("yyyy-MM-dd hh:mm")</a>
                                                 @if(test.testResult == "Passed") {
-                                                <span class="success">@test.testResult</span>
+                                                    <span class="success">@test.testResult</span>
                                                 } else {
-                                                <span class="fail">@test.testResult</span>
+                                                    <span class="fail">@test.testResult</span>
                                                 }
                                             </div>
                                         </div>

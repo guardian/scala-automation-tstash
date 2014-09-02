@@ -20,22 +20,36 @@
 @main("Test Stash - Test Execution History", navBar = (navBar)) {
 
     <img class="pull-left" src="@routes.Assets.at("images/automated.gif")" alt="Evolution of testing">
-    <h2> Rascal (plural rascals)</h2>
-    <ol>
-        <li>A dishonest person; a rogue; a scoundrel; a trickster.</li>
-        <li>A playfully mischievous person or creature; a troublemaker.</li>
-        <ul>
-            <li>That little rascal bit me!</li>
-            <li> If you have deer in the area, you may have to put a fence around your garden to keep the rascals out.
-            </li>
-        </ul>
-        <li><strong>The Guardian's new SCALA test automation framework...</strong></li>
-    </ol>
-    <p>Nulla porttitor accumsan tincidunt. Donec rutrum congue leo eget malesuada. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;
-        Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Sed porttitor lectus nibh. Curabitur aliquet quam id dui posuere blandit.
-        Curabitur aliquet quam id dui posuere blandit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;
-        Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;
-        Donec velit neque, auctor sit amet aliquam vel, ullamcorper sit amet ligula. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.
-        Praesent sapien massa, convallis a pellentesque nec, egestas non nisi.</p>
+
+    <h2>Latest Results:</h2>
+
+    <div class="container">
+    @for((set, setRuns) <- testSets) {
+        <div class="col-sm-10">
+            <div class="panel-group ng-scope" id="accordion">
+                <div class="panel panel-default" style="display: block;">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-sm-10">
+                                            <a href="set?setId=@setRuns.head.id.get.stringify">@setRuns.head.setName - @setRuns.head.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a>
+                                            @if(setRuns.head.result == "Passed") {
+                                                <span class="success">@setRuns.head.result</span>
+                                            } else {
+                                                <span class="fail">@setRuns.head.result</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    </div>
 
 }
