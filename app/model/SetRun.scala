@@ -4,10 +4,10 @@ import org.joda.time.DateTime
 import reactivemongo.api.indexes.{IndexType, Index}
 import reactivemongo.bson._
 
-case class SetRun(id: Option[BSONObjectID],
+case class SetRun(id: Option[BSONObjectID] = None,
                   setName: String,
-                  setDate: Option[DateTime],
-                  result: String)
+                  setDate: Option[DateTime] = None,
+                  result: String = "PASSED")
 
 object SetRun {
 

@@ -2,6 +2,8 @@ package service
 
 import java.io.File
 
+import reactivemongo.api.collections.default.BSONCollection
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -14,7 +16,6 @@ import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Enumerator
 import reactivemongo.api.MongoDriver
-import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.api.gridfs.{DefaultFileToSave, GridFS}
 import reactivemongo.api.gridfs.Implicits._
 import reactivemongo.bson.{BSONDateTime, BSONDocument, BSONObjectID}
@@ -30,21 +31,26 @@ object DbService {
   lazy val collectionTestRuns = db.collection[BSONCollection]("TestRuns")
   lazy val gfs = GridFS(db, "Screenshots")
 
-  def insertTestRun(setRun: SetRun, testRun: TestRun) = {
+  def insertTestRun(testRun: TestRun): (Future[SetRun], Future[TestRun]) = {
 
-    val setRunFuture = collectionSetRuns.find(BSONDocument("setName" -> setRun.setName, "setDate" -> setRun.setDate.map(date => BSONDateTime(date.getMillis)))).one[SetRun].map {
+    val setRunFuture = findSetRun(SetRun(setName = testRun.setName.get, setDate = testRun.setDate)).map {
       case Some(sr) => sr
       case None => {
-        val sr = setRun.copy(id = Some(BSONObjectID.generate))
+        val sr = SetRun(id = Some(BSONObjectID.generate), setName = testRun.setName.get, setDate = testRun.setDate, result = testRun.testResult)
         collectionSetRuns.insert(sr)
         sr
       }
     }
 
-    val testRunFuture = setRunFuture.map { sr =>
-      val tr = testRun.copy(id = Some(BSONObjectID.generate), setId = sr.id)
-      collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace() })
-      tr
+    val testRunFuture = setRunFuture.flatMap { sr =>
+      findTestRun(testRun, sr.id.get).map {
+        case Some(tr) => tr
+        case None => {
+          val tr = testRun.copy(id = Some(BSONObjectID.generate), setId = sr.id)
+          collectionTestRuns.insert(tr).recover({ case x => println(x); x.printStackTrace()})
+          tr
+        }
+      }
     }
 
     (setRunFuture, testRunFuture)
@@ -101,11 +107,11 @@ object DbService {
 
   def setRunFailed(setAndTestFuture: (Future[SetRun], Future[TestRun]), error: String): Unit = {
     setAndTestFuture._1.map { sr =>
-      collectionSetRuns.update(BSONDocument("_id" -> sr.id.get), BSONDocument("$set" -> BSONDocument("result" -> "Failed")))
+      collectionSetRuns.update(BSONDocument("_id" -> sr.id.get), BSONDocument("$set" -> BSONDocument("result" -> "FAILED")))
         .recover { case x => println(x); x.printStackTrace() }
     }
     setAndTestFuture._2.map { tr =>
-      collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$set" -> BSONDocument("testResult" -> "Failed", "error" -> error)))
+      collectionTestRuns.update(BSONDocument("_id" -> tr.id.get), BSONDocument("$set" -> BSONDocument("testResult" -> "FAILED", "error" -> error)))
         .recover { case x => println(x); x.printStackTrace() }
     }
   }

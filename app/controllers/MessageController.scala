@@ -1,11 +1,8 @@
 package controllers
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import model.{SetRun, TestRun}
 import org.joda.time.DateTime
 import play.Logger
-import play.api.libs.iteratee.{Enumerator, Iteratee}
 import play.api.libs.json._
 import play.api.mvc._
 import service.DbService
@@ -15,42 +12,31 @@ import service.DbService
  */
 object MessageController extends Controller {
 
-  def report(testName: String, testDate: String, setName: String, setDate: String) = WebSocket.using[JsValue] { request =>
+  def report() = Action(BodyParsers.parse.json) { request =>
+    val result = request.body.validate[TestRun]
+    result.fold(
+      errors => {
+        BadRequest(Json.obj("status" ->"KO", "message" -> JsError.toFlatJson(errors)))
+      },
+      testRun => {
+        Logger.info("Adding message: " + testRun)
 
-    val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None, None)
-    val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)), "Passed")
-    val setAndTestFuture = DbService.insertTestRun(setRun, testRun)
+        val setAndTestFuture = DbService.insertTestRun(testRun)
 
-    val out = Enumerator(Json.parse("""{"message":"OK"}"""))
+        testRun.messages.map { messages => DbService.addMessageToTestRun(setAndTestFuture._2, messages(0)) }
+        testRun.error.map { DbService.setRunFailed(setAndTestFuture, _) } // test failed
 
-    val in = Iteratee.foreach[JsValue](json => {
-      Logger.info(s"received: ($testName, $testDate, $setName, $setDate) ${json}")
-      val message = (json \ "message").asOpt[String]
-      val error = (json \ "error").asOpt[String]
-      val timeStamp = (json \ "timeStamp").toString()
-
-      message.map { str => DbService.addMessageToTestRun(setAndTestFuture._2, str) }
-      error.map { str => DbService.setRunFailed(setAndTestFuture, str) } // test failed
-    })
-
-    (in, out)
+        Ok(Json.obj("status" ->"OK", "message" -> ("OK") ))
+      }
+    )
   }
 
   def screenShotUpload(testName: String, testDate: String, setName: String, setDate: String) = Action.async(parse.temporaryFile) { request =>
     Logger.info(s"received: ($testName, $testDate, $setName, $setDate) Screen shot received.")
-    val testRun = TestRun(None, None, testName, Option(new DateTime(testDate.toLong)), "Passed", None, None, None)
-    val setRun = SetRun(None, setName, Option(new DateTime(setDate.toLong)), "Passed")
+    val testRun = TestRun(testName = testName, testDate = Option(new DateTime(testDate.toLong)))
+    val setRun = SetRun(setName = setName, setDate = Option(new DateTime(setDate.toLong)))
     DbService.insertScreenshot(testRun, setRun, request.body.file)
   }
-
-  //  implicit val testResultReads: Reads[TestResult] = EnumUtils.enumReads(TestResult)
-//  val testInfoReads: Reads[TestInfo] = (
-//    (JsPath \ "testName").read[String] and
-//      (JsPath \ "testSet").read[String] and
-//      (JsPath \ "testDuration").read[String] and
-//      (JsPath \ "testResult").read[TestResult] and
-//      (JsPath \ "error").readNullable[String]
-//    )(TestInfo.apply _)
 
   //    def javascriptRoutes = Action { implicit request =>
   // this tracks back the javascript method call on server side.
