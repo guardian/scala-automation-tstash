@@ -35,7 +35,7 @@
                                     <div class="row">
                                         <div class="col-sm-10">
                                             <a href="set?setId=@setRuns.head.id.get.stringify">@setRuns.head.setName - @setRuns.head.setDate.get.toDate.format("yyyy-MM-dd hh:mm")</a>
-                                            @if(setRuns.head.result == "Passed") {
+                                            @if(setRuns.head.result == "PASSED") {
                                                 <span class="success">@setRuns.head.result</span>
                                             } else {
                                                 <span class="fail">@setRuns.head.result</span>

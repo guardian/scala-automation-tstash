@@ -2,7 +2,7 @@
 
 @main("Test Stash - Test Log") {
 
-    @if(testRun.testResult == "Passed") {
+    @if(testRun.testResult == "PASSED") {
         <img class="pull-right" src="@routes.Assets.at("images/thumbs_up.gif")" alt="thumbs_up">
     } else {
         <img class="pull-right" src="@routes.Assets.at("images/thumbs_down.gif")" alt="thumbs_down">
