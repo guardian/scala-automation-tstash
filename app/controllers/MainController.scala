@@ -1,5 +1,7 @@
 package controllers
 
+import org.joda.time.DateTime
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import play.api.mvc._
@@ -22,6 +24,10 @@ object MainController extends Controller with MongoController {
 
   def set(setId: String) = Action.async {
     DbService.getAllTest(BSONObjectID(setId)).map { x => Ok(views.html.set(x)) }
+  }
+
+  def setLookup(setName: String, setDate: String) = Action.async {
+    DbService.getAllTests(setName, new DateTime(setDate.toLong)).map { x => Ok(views.html.set(x)) }
   }
 
   def test(id: String) = Action.async {
