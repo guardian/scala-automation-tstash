@@ -164,4 +164,13 @@ object DbService {
     gfs.find(BSONDocument("_id" -> id))
   }
 
+  def getAllTests(setName: String, setDate: DateTime): Future[List[TestRun]] = {
+    val setRun = findSetRun(SetRun(setName = setName, setDate = Some(setDate)))
+    setRun.flatMap {
+      setRun2: Option[SetRun] =>
+        val result = Future.sequence(setRun2.map(setRun3 => getAllTest(setRun3.id.get)))
+        result.map(_.flatten.toList)
+    }
+  }
+
 }

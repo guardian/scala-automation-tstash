@@ -5,6 +5,7 @@
 GET         /                        controllers.MainController.index()
 GET         /project                 controllers.MainController.project(name)
 GET         /set                     controllers.MainController.set(setId)
+GET         /setLookup               controllers.MainController.setLookup(setName, setDate)
 GET         /test                    controllers.MainController.test(id)
 POST        /report                  controllers.MessageController.report()
 POST        /screenShotUpload        controllers.MessageController.screenShotUpload(testName, testDate, setName, setDate)
