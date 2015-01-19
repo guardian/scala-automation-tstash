@@ -168,7 +168,8 @@ object DbService {
     val setRun = findSetRun(SetRun(setName = setName, setDate = Some(setDate)))
     setRun.flatMap {
       setRun2: Option[SetRun] =>
-        val result = Future.sequence(setRun2.map(setRun3 => getAllTest(setRun3.id.get)))
+        val working = setRun2.map(setRun3 => getAllTest(setRun3.id.get)).toList
+        val result = Future.sequence[List[model.TestRun],List](working)
         result.map(_.flatten.toList)
     }
   }
