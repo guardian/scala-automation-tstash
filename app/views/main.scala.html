@@ -1,4 +1,4 @@
-@(title: String, navBar: Html = Html(""))(content: Html)
+@(title: String, navBar: Html = Html(""), isSetPage: Boolean = false)(content: Html)
 
 <!DOCTYPE html>
 <!--[if lt IE 7]>
@@ -13,6 +13,11 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        @if (isSetPage == true){
+            <meta http-equiv="refresh" content="10">}
+        else {
+            <meta http-equiv="refresh" content="30">
+        }
         <title>@title</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
