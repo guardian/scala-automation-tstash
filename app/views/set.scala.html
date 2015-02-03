@@ -1,6 +1,6 @@
 @(testList: List[model.TestRun])
 
-@main("Test Stash - Test Set") {
+@main("Test Stash - Test Set", isSetPage = true) {
 
     <div class="container">
         @for(test <- testList) {
